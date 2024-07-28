@@ -44,11 +44,11 @@ const connectDB = async () => {
 connectDB();
 
 //App
-const PORT = 7900;
+//const PORT = 7352;
 const connectApp = () => {
   try {
     app.listen(process.env.PORT, () => {
-      console.log(`Server is running on ${PORT}`);
+      console.log(`Server is running on ${process.env.PORT}`);
     });
   } catch (error) {
     console.log(error);
