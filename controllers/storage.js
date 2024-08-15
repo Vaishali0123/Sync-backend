@@ -1,8 +1,13 @@
 const Storage = require("../models/Storage");
 const User = require("../models/User");
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} = require("@aws-sdk/client-s3");
 const Organization = require("../models/Organization");
 const uuid = require("uuid").v4;
+const AWS = require("aws-sdk");
 
 const BUCKET_NAME = process.env.BUCKET_NAME;
 const Msgbucket = process.env.MSG_BUCKET;
@@ -67,21 +72,23 @@ exports.uploadtostorage = async (req, res) => {
       const uuidString = uuid();
       const size = convertSize(req.file.size);
       const objectName = `${Date.now()}_${uuidString}_${req.file.originalname}`;
-      //   const result = await s3.send(
-      //     new PutObjectCommand({
-      //       Bucket: BUCKET_NAME,
-      //       Key: objectName,
-      //       Body: req.file.buffer,
-      //       ContentType: req.file.mimetype,
-      //     })
-      //   );
+      const result = await s3.send(
+        new PutObjectCommand({
+          Bucket: BUCKET_NAME,
+          Key: objectName,
+          Body: req.file.buffer,
+          ContentType: req.file.mimetype,
+        })
+      );
       const st = new Storage({
         size: size.kb,
         date: new Date(),
         orgid: org._id,
         userid: user._id,
         filename: req.file.originalname,
+        objectName: objectName,
       });
+      console.log(st, "st");
       await st.save();
       await Organization.updateOne(
         { _id: org._id },
@@ -102,9 +109,9 @@ exports.deleteitem = async (req, res) => {
     const { id, sid } = req.body;
 
     const org = await Organization.findById(id);
-    console.log(org, "org");
+
     const st = await Storage.findById(sid);
-    console.log(st, "st");
+
     if (org) {
       await Organization.updateOne(
         { _id: org._id },
@@ -118,5 +125,42 @@ exports.deleteitem = async (req, res) => {
   } catch (e) {
     console.log(e);
     res.status(400).json({ success: false });
+  }
+};
+
+// AWS.config.update({
+//   accessKeyId: process.env.AWS_ACCESS_KEY,
+//   secretAccessKey: process.env.AWS_SECRET_KEY,
+//   region: process.env.BUCKET_REGION,
+// });
+
+// const s3 = new AWS.S3();
+exports.downloadhandler = async (req, res) => {
+  const { key } = req.query;
+  console.log(key, "Key");
+  const params = {
+    Bucket: "nexoo",
+    Key: key,
+  };
+
+  try {
+    const command = new GetObjectCommand(params);
+    const data = await s3.send(command);
+
+    // Set headers
+    res.setHeader("Content-Type", data.ContentType);
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${key || "defaultpic.png"}"`
+    );
+
+    // Stream the file to the response
+    data.Body.pipe(res).on("error", (err) => {
+      console.error(err);
+      res.status(500).json({ error: "Error streaming the file" });
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to download file from S3" });
   }
 };

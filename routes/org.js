@@ -7,6 +7,8 @@ const {
   createTeam,
   getteams,
   joinedteam,
+  getTeamChats,
+  getAddMembers,
 } = require("../controllers/org");
 
 const storage = multer.memoryStorage();
@@ -15,6 +17,8 @@ const upload = multer({ storage: storage });
 router.post("/fetchallmembers", fetchallmembers);
 router.post("/v1/createteam/:userId/:orgid", createTeam);
 router.get("/getteams/:orgid", getteams);
-router.post("/joinedteam/:userId/:teamid", joinedteam);
+router.get("/getTeamconv/:userId", getTeamChats);
+router.post("/joinedteam/:userId/:teamId", joinedteam);
+router.get("/getAddMembers/:userId/:teamId", getAddMembers);
 
 module.exports = router;

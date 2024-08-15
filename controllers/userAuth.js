@@ -192,7 +192,7 @@ exports.signup = async (req, res) => {
   try {
     const { email, jobrole, password, org, username } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email });
     if (user) {
       const data = {
         id: user?._id,
@@ -207,7 +207,7 @@ exports.signup = async (req, res) => {
 
       const access_token = generateAccessToken(data);
       const refresh_token = generateRefreshToken(data);
-
+      
       res
         .status(200)
         .json({ data: user, success: true, data, access_token, refresh_token });
@@ -360,12 +360,15 @@ exports.getuserdata = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id);
     if (user) {
-      res.status(200).json({ success: true, user });
+      console.log(user?.dp);
+      const profile=process.env.URL+user?.dp;
+      res.status(200).json({ success: true, user,profile });
     } else {
-      res.status(404).json({ success: false });
+      res.status(304).json({ success: false });
     }
   } catch (e) {
     console.log(e);
     res.status(400).json({ success: false });
   }
 };
+3

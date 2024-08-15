@@ -13,6 +13,7 @@ const storageSchema = new mongoose.Schema(
     filename: { type: String },
     date: { type: Date, default: Date.now },
     size: { type: Number, default: 0 }, //kb
+    objectName: { type: String },
   },
   { timestamps: true }
 );
